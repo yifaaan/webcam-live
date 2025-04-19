@@ -15,3 +15,23 @@ categories = ["development-tools"]
 keywords = []
 
 [dependencies]
+console_error_panic_hook = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sycamore = {version = "0.9.0-beta.4", features = ["serde"]}
+tracing = "0.1"
+tracing-wasm = "0.2"
+js-sys = "0.3"
+
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    "Document",
+    "Element",
+    "Window",
+    "Node",
+    "HtmlElement",
+    "SvgElement",
+
+]
