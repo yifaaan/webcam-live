@@ -1,0 +1,8 @@
+[[hooks]]
+stage = "build"
+name = "Build Tailwind CSS"
+command = "/bin/bash"
+command_arguments = [
+    "-c",
+    "node ./node_modules/.bin/tailwindcss -i index.css -o dist/.stage/tailwind.css"
+]
