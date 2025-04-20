@@ -20,7 +20,7 @@ impl<'a> VideoStream<'a> {
         let media_devices = navigator.media_devices().expect("no media devices");
         info!("devices(tracing_wasm): {:?}", media_devices);
         web_sys::console::log_1(&media_devices);
-        let mut constraints = web_sys::MediaStreamConstraints::new();
+        let constraints = web_sys::MediaStreamConstraints::new();
         // web_sys::console::log_1(&constraints);
         constraints.set_video(&serde_wasm_bindgen::to_value(video_constraints).unwrap());
         constraints.set_audio(&false.into());
