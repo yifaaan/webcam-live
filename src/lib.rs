@@ -22,11 +22,9 @@ impl<'a> VideoStream<'a> {
         web_sys::console::log_1(&media_devices);
         let mut constraints = web_sys::MediaStreamConstraints::new();
         // web_sys::console::log_1(&constraints);
-        let json_string = serde_json::to_string(video_constraints).unwrap();
-        let js_value = js_sys::JSON::parse(&json_string).unwrap();
-        constraints.set_video(&js_value);
+        constraints.set_video(&serde_wasm_bindgen::to_value(video_constraints).unwrap());
         constraints.set_audio(&false.into());
-        
+    
         // 错误处理
         match media_devices.get_user_media_with_constraints(&constraints) {
             Ok(promise) => {
