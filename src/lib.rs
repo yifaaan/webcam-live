@@ -1,23 +1,16 @@
-use js_sys::wasm_bindgen::JsValue;
-use sycamore::{
-    prelude::MaybeDyn,
-    web::{
-        GlobalProps, NodeRef, SetAttribute,
-        tags::{HtmlVideo, video},
-    },
-};
+use leptos::html;
+use leptos::prelude::*;
 use tracing::info;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsValue, JsCast};
 
-pub struct VideoStream {
-    el: HtmlVideo,
+pub struct VideoStream<'a> {
+    node_ref: &'a NodeRef<html::Video>,
 }
 
-impl VideoStream {
-    pub fn new(node_ref: NodeRef) -> Self {
-        let el = video();
+impl<'a> VideoStream<'a> {
+    pub fn new(node_ref: &'a NodeRef<html::Video>) -> Self {
         Self {
-            el: el.r#ref(node_ref),
+            node_ref
         }
     }
 
@@ -25,8 +18,6 @@ impl VideoStream {
         let window = web_sys::window().expect("no global window");
         let navigator = window.navigator();
         let media_devices = navigator.media_devices().expect("no media devices");
-        let mut constraints = web_sys::MediaStreamConstraints::new();
-        constraints.set_video(&JsValue::from_bool(true));
         info!("devices(tracing_wasm): {:?}", media_devices);
         web_sys::console::log_1(&media_devices);
         let mut constraints = web_sys::MediaStreamConstraints::new();
@@ -35,16 +26,49 @@ impl VideoStream {
         let js_value = js_sys::JSON::parse(&json_string).unwrap();
         constraints.set_video(&js_value);
         constraints.set_audio(&false.into());
-        let media = wasm_bindgen_futures::JsFuture::from(
-            media_devices
-                .get_user_media_with_constraints(&constraints)
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-        // let media_stream = media.unchecked_into::<web_sys::MediaStream>();
-        // info!("media_stream(tracing_wasm): {:?}", media_stream);
-        let a = MaybeDyn::from(media);
-        self.el.set_attribute("srcObject", a);
+        
+        // 错误处理
+        match media_devices.get_user_media_with_constraints(&constraints) {
+            Ok(promise) => {
+                match wasm_bindgen_futures::JsFuture::from(promise).await {
+                    Ok(media) => {
+                        let media_stream = media.unchecked_into::<web_sys::MediaStream>();
+                        
+                        // 获取视频元素
+                        if let Some(video_element) = self.node_ref.get() {
+                            // 使用leptos的dom_element方法获取底层DOM元素
+                            let video_js_value = video_element.clone();
+                            
+                            // 使用JavaScript的Set方法设置srcObject属性
+                            let window = web_sys::window().expect("无法获取window");
+                            let _ = js_sys::Reflect::set(
+                                &video_js_value.into(), 
+                                &JsValue::from_str("srcObject"), 
+                                &media_stream
+                            );
+                            
+                            // 尝试播放视频
+                            if let Some(video) = video_element.dyn_ref::<web_sys::HtmlVideoElement>() {
+                                match video.play() {
+                                    Ok(_) => info!("视频播放成功"),
+                                    Err(e) => {
+                                        web_sys::console::log_1(&e);
+                                        info!("视频播放失败: {:?}", e);
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    Err(e) => {
+                        web_sys::console::log_1(&e);
+                        info!("获取媒体流失败: {:?}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                web_sys::console::log_1(&e);
+                info!("请求摄像头权限失败: {:?}", e);
+            }
+        }
     }
 }
