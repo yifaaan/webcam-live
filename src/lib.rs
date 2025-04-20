@@ -25,16 +25,13 @@ impl<'a> VideoStream<'a> {
         constraints.set_video(&serde_wasm_bindgen::to_value(video_constraints).unwrap());
         constraints.set_audio(&false.into());
     
-        // 错误处理
         match media_devices.get_user_media_with_constraints(&constraints) {
             Ok(promise) => {
                 match wasm_bindgen_futures::JsFuture::from(promise).await {
                     Ok(media) => {
                         let media_stream = media.unchecked_into::<web_sys::MediaStream>();
                         
-                        // 获取视频元素
                         if let Some(video_element) = self.node_ref.get() {
-                            // 使用leptos的dom_element方法获取底层DOM元素
                             let video_js_value = video_element.clone();
                             
                             // 使用JavaScript的Set方法设置srcObject属性
